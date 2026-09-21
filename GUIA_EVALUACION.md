@@ -96,3 +96,21 @@ Si tienes que presentar el proyecto en 5 a 10 minutos ante un evaluador técnico
 
 ### P3: ¿Cómo se garantiza la atomicidad entre la solicitud y su historial?
 * **Respuesta:** Mediante `prisma.$transaction(async (tx) => { ... })`. La actualización de la solicitud (con incremento de versión) y la inserción del registro en `Historial` ocurren dentro del mismo bloque transaccional SQL. Si alguna de las dos falla, toda la operación hace rollback automático, impidiendo estados inconsistentes.
+
+### P4: ¿Cómo se comporta el sistema exactamente si dos personas intentan modificar la misma solicitud al mismo tiempo?
+* **Respuesta:**
+  1. **Lectura simultánea:** Tanto el Usuario A como el Usuario B abren la misma solicitud en sus pantallas. Ambos reciben los mismos datos y la misma versión de control (ejemplo: `version: 1`).
+  2. **Primer guardado exitoso (*First-Write-Wins*):**
+     * El Usuario A envía su cambio primero.
+     * En el backend se ejecuta: `prisma.solicitud.updateMany({ where: { id, version: 1 }, data: { ...cambiosA, version: 2 } })`.
+     * La condición se cumple (`count === 1`), los cambios se persisten, se genera el registro en `Historial` y la versión pasa atómicamente a `2`.
+  3. **Segundo guardado en colisión (Detección de versión obsoleta):**
+     * Instantes después, el Usuario B intenta guardar sus cambios enviando la versión que tenía en su pantalla (`version: 1`).
+     * El backend ejecuta la misma consulta buscando `where: { id, version: 1 }`.
+     * Como el registro en base de datos ya tiene `version: 2`, la consulta no afecta a ninguna fila (`updateResult.count === 0`).
+  4. **Respuesta del Servidor:**
+     * Se aborta la transacción y el servidor responde inmediatamente con código **HTTP 409 Conflict** y el mensaje de error:
+       > *"La solicitud fue modificada por otro usuario. Por favor recarga los datos para ver la versión actualizada."*
+  5. **Comportamiento en la Interfaz (Frontend):**
+     * La aplicación captura el error 409 y despliega un panel de advertencia destacado en color ámbar explicando que la versión quedó obsoleta.
+     * Muestra un botón directo de **"Recargar Versión Nueva"** que consulta la última versión del servidor (v2 con los cambios del Usuario A) para que el Usuario B pueda visualizarlos y decidir si vuelve a aplicar su cambio sin sobrescribir información ajena por accidente.
