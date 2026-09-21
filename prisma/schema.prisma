@@ -1,0 +1,77 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../lib/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Prioridad {
+  BAJA
+  NORMAL
+  ALTA
+  URGENTE
+}
+
+enum Estado {
+  PENDIENTE
+  EN_PROCESO
+  ATENDIDA
+  CANCELADA
+}
+
+model Usuario {
+  id                    String      @id @default(uuid())
+  nombre                String
+  email                 String      @unique
+  rol                   String      // Ej: "EMPLEADO", "SOPORTE", "ADMIN"
+  solicitudesCreadas    Solicitud[] @relation("CreadorSolicitud")
+  solicitudesAsignadas  Solicitud[] @relation("ResponsableSolicitud")
+  historiales           Historial[]
+
+  createdAt             DateTime    @default(now())
+}
+
+model Solicitud {
+  id              String      @id @default(uuid())
+  titulo          String
+  descripcion     String
+  categoria       String
+  prioridad       Prioridad   @default(NORMAL)
+  estado          Estado      @default(PENDIENTE)
+  
+  creadorId       String
+  creador         Usuario     @relation("CreadorSolicitud", fields: [creadorId], references: [id])
+  
+  responsableId   String?
+  responsable     Usuario?    @relation("ResponsableSolicitud", fields: [responsableId], references: [id])
+  
+  // Control de Concurrencia Optimista
+  version         Int         @default(1)
+
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  historial       Historial[]
+
+  @@index([estado])
+  @@index([prioridad])
+  @@index([categoria])
+  @@index([createdAt])
+}
+
+model Historial {
+  id            String    @id @default(uuid())
+  solicitudId   String
+  solicitud     Solicitud @relation(fields: [solicitudId], references: [id], onDelete: Cascade)
+  
+  usuarioId     String
+  usuario       Usuario   @relation(fields: [usuarioId], references: [id])
+  
+  accion        String    // Ej: "CREACION", "CAMBIO_ESTADO", "ASIGNACION_RESPONSABLE", "EDICION_DATOS"
+  detalles      Json?     // Valores anteriores y nuevos para auditoría
+  createdAt     DateTime  @default(now())
+
+  @@index([solicitudId])
+}
