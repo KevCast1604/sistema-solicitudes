@@ -444,7 +444,7 @@ export function RequestDetailDialog({
                   <div className="flex items-center gap-2">
                     <History className="w-4 h-4 text-blue-600" />
                     <h3 className="text-sm font-bold text-slate-800">
-                      Historial Inmutable de Cambios (Audit Log)
+                      Historial de Cambios
                     </h3>
                   </div>
                   <span className="text-xs text-slate-400">
@@ -540,9 +540,6 @@ export function RequestDetailDialog({
 
         {/* Footer */}
         <div className="flex items-center justify-between px-6 py-3 border-t border-slate-200 bg-slate-50/50">
-          <span className="text-xs text-slate-400">
-            Audit Log Append-Only: Los registros de historial son inmutables.
-          </span>
           <button
             onClick={onClose}
             className="px-4 py-1.5 rounded-lg text-xs font-semibold bg-slate-200 text-slate-700 hover:bg-slate-300 transition-colors"

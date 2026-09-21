@@ -42,7 +42,7 @@ async function main() {
     },
   });
 
-  console.log('✅ 4 usuarios creados con éxito.');
+  console.log(' 4 usuarios creados con éxito.');
 
   const now = Date.now();
   const hoursAgo = (h: number) => new Date(now - h * 60 * 60 * 1000);
@@ -398,13 +398,13 @@ async function main() {
     },
   });
 
-  console.log('✅ 9 solicitudes de prueba creadas con sus historiales.');
-  console.log('🚀 Seed completado exitosamente.');
+  console.log(' 9 solicitudes de prueba creadas con sus historiales.');
+  console.log(' Seed completado exitosamente.');
 }
 
 main()
   .catch((e) => {
-    console.error('❌ Error en seed:', e);
+    console.error(' Error en seed:', e);
     process.exit(1);
   })
   .finally(async () => {
